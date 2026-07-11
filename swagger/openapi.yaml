@@ -1,0 +1,177 @@
+openapi: 3.0.3
+info:
+  title: ai-gateway
+  version: "0.1.0"
+  description: >
+    Local testing spec for the deployed ai-gateway Worker. Covers the npm dependency
+    proxy (registry.larrylane.dev) and Context7 REST brokering (context7.larrylane.dev).
+    Both surfaces require a bearer token from this project's Entra CIAM tenant — use the
+    Authorize button (client-credentials flow) to fetch one and attach it automatically.
+
+servers:
+  - url: https://registry.larrylane.dev
+    description: Package registry proxy (npm; PyPI/NuGet not yet implemented)
+  - url: https://context7.larrylane.dev
+    description: Context7 documentation brokering
+
+security:
+  - entraCiam: []
+
+paths:
+  /npm/{package}:
+    get:
+      summary: Get an npm packument (all versions + dist-tags)
+      tags: [npm]
+      parameters:
+        - name: package
+          in: path
+          required: true
+          schema:
+            type: string
+          example: left-pad
+          description: Package name. For scoped packages use "@scope/name".
+      responses:
+        "200":
+          description: npm packument JSON
+          content:
+            application/json:
+              schema:
+                type: object
+        "401":
+          description: Missing or invalid bearer token
+        "404":
+          description: Package not found
+        "451":
+          description: Package is on the deny-list
+
+  /npm/{package}/{version}:
+    get:
+      summary: Get a single npm version manifest
+      tags: [npm]
+      parameters:
+        - name: package
+          in: path
+          required: true
+          schema:
+            type: string
+          example: left-pad
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "1.3.0"
+      responses:
+        "200":
+          description: Version manifest JSON
+        "401":
+          description: Missing or invalid bearer token
+        "404":
+          description: Not found
+
+  /npm/{package}/-/{fileName}:
+    get:
+      summary: Download an npm tarball (integrity-verified against the packument shasum)
+      tags: [npm]
+      parameters:
+        - name: package
+          in: path
+          required: true
+          schema:
+            type: string
+          example: left-pad
+        - name: fileName
+          in: path
+          required: true
+          schema:
+            type: string
+          example: left-pad-1.3.0.tgz
+      responses:
+        "200":
+          description: Tarball bytes
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "401":
+          description: Missing or invalid bearer token
+        "502":
+          description: Integrity check failed against upstream
+
+  /search:
+    get:
+      summary: Search Context7 for a library (forwards to /api/v2/libs/search)
+      tags: [context7]
+      servers:
+        - url: https://context7.larrylane.dev
+      parameters:
+        - name: libraryName
+          in: query
+          required: true
+          schema:
+            type: string
+          example: react
+        - name: query
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+        "401":
+          description: Missing/invalid bearer token, or invalid upstream Context7 API key
+        "404":
+          description: Missing required query parameter
+
+  /docs:
+    get:
+      summary: Get Context7 documentation snippets (forwards to /api/v2/context)
+      tags: [context7]
+      servers:
+        - url: https://context7.larrylane.dev
+      parameters:
+        - name: libraryId
+          in: query
+          required: true
+          schema:
+            type: string
+          example: /reactjs/react.dev
+        - name: query
+          in: query
+          required: false
+          schema:
+            type: string
+          example: hooks
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [json]
+          description: Pass "json" for a JSON response; omitted defaults to markdown/text.
+      responses:
+        "200":
+          description: Documentation snippets (markdown text, or JSON if type=json)
+        "401":
+          description: Missing/invalid bearer token, or invalid upstream Context7 API key
+        "404":
+          description: Missing required query parameter
+
+components:
+  securitySchemes:
+    entraCiam:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >
+        Entra External ID (CIAM) bearer token. The local swagger server mints this
+        server-side via the client-credentials flow (Entra's token endpoint blocks
+        browser-based client-credentials over CORS, so the exchange can't run in the
+        browser). Use the "Get token" button at the top of the page to fetch and apply
+        one automatically, or paste a token obtained via scripts/test-auth.mjs.

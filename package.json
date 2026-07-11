@@ -1,0 +1,25 @@
+{
+  "name": "dep-proxy",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "swagger": "node swagger/serve.mjs"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250701.0",
+    "swagger-ui-dist": "^5.32.8",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0",
+    "wrangler": "^4.107.0",
+    "yaml": "^2.9.0"
+  },
+  "dependencies": {
+    "jose": "^6.2.3"
+  }
+}

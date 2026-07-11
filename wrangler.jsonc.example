@@ -1,0 +1,35 @@
+// Copy to wrangler.jsonc and fill in your own values.
+// wrangler.jsonc is gitignored; this example is the committed template.
+//
+// None of these values are secrets (real secrets are set via `wrangler secret put`
+// and .dev.vars) — the tenant/client IDs are public identifiers that appear in every
+// issued token. They live here only to keep deploy config out of the shared repo.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "dep-proxy",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true
+  },
+  "routes": [
+    { "pattern": "registry.<your-domain>/*", "zone_name": "<your-domain>" },
+    { "pattern": "context7.<your-domain>/*", "zone_name": "<your-domain>" }
+  ],
+  "vars": {
+    "NPM_UPSTREAM": "https://registry.npmjs.org",
+    "REGISTRY_HOSTNAME": "registry.<your-domain>",
+    "CONTEXT7_HOSTNAME": "context7.<your-domain>",
+    // Entra External ID (CIAM) app registration. ENTRA_AUDIENCE is the bare client-id
+    // GUID (the token's `aud` claim), NOT the api://... scope URI — see DESIGN.md.
+    "ENTRA_TENANT_ID": "<your-tenant-id-guid>",
+    "ENTRA_AUDIENCE": "<your-client-id-guid>",
+    // Comma-separated browser origins allowed to call the gateway (e.g. the local
+    // Swagger console). Never wildcard.
+    "CORS_ALLOWED_ORIGINS": "http://127.0.0.1:5173,http://localhost:5173"
+  }
+}
+// Secrets NOT in this file (set separately):
+//   CONTEXT7_API_KEY  -> `wrangler secret put CONTEXT7_API_KEY` (deployed) / .dev.vars (local)
+//   CLIENT_SECRET     -> .dev.vars only; used by the local Swagger console, never by the Worker

@@ -1,0 +1,13 @@
+# Copy to .dev.vars for local `wrangler dev` runs. Never commit the real .dev.vars file.
+#
+# Secrets that are set on the deployed Worker via `wrangler secret put <NAME>` (not
+# checked into wrangler.jsonc) still need local values here for `wrangler dev` to work.
+
+# Context7 API key (from https://context7.com/dashboard). Required for the
+# context7.larrylane.dev brokering endpoints to return real responses instead of a 401.
+CONTEXT7_API_KEY=
+
+# Used only by scripts/test-auth.mjs to obtain a client-credentials access token from
+# this project's Entra CIAM app registration (see DESIGN.md > Auth). The Worker itself
+# never sees this value — it only validates the bearer token callers send it.
+CLIENT_SECRET=
